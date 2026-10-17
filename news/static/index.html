@@ -1,0 +1,570 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Сводка — новости по вашей теме</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%231f3366'/%3E%3Cpath d='M8 10h16M8 16h16M8 22h10' stroke='%23fff' stroke-width='3' stroke-linecap='round'/%3E%3C/svg%3E">
+<style>
+:root {
+  /* та же приглушённая тема, что у ассистента и дашборда ML-проекта */
+  --page: #9aa3af;
+  --frame: #c2c8d0;
+  --frame-line: #848e9c;
+  --card: #dbdfe5;
+  --card-line: #a1aab6;
+  --field: #e9ecef;
+  --line: #b3bbc6;
+  --text: #161e2c;
+  --muted: #424c5e;
+  --navy: #1f3366;
+  --navy-soft: #c6d0e3;
+  --red: #9b1c12; --red-bg: #efcfca;
+  --amber: #733f03;
+  --ui: "Segoe UI Variable Text", "Segoe UI", system-ui, sans-serif;
+  --head: "Segoe UI Variable Display", "Segoe UI", system-ui, sans-serif;
+  --num: Bahnschrift, "Segoe UI", sans-serif;
+  --mono: "Cascadia Mono", Consolas, monospace;
+}
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+body { margin: 0; background: var(--page); color: var(--text); font: 18px/1.45 var(--ui); }
+button { font: inherit; color: inherit; cursor: pointer; }
+button:disabled { opacity: .6; cursor: default; }
+input, textarea { font: 18px var(--ui); color: var(--text); background: var(--field); border: 1px solid var(--card-line);
+  border-radius: 10px; padding: 10px 14px; outline: none; width: 100%; }
+textarea { resize: vertical; line-height: 1.4; }
+input:focus, textarea:focus { border-color: var(--navy); box-shadow: 0 0 0 2px var(--navy-soft); }
+a { color: var(--navy); }
+.wrap { max-width: 1520px; margin: 18px auto; padding: 0 20px; }
+.frame { background: var(--frame); border: 1px solid var(--frame-line); border-radius: 20px; padding: 18px 24px 24px;
+  box-shadow: 0 14px 40px rgba(16,24,40,.22); }
+
+/* Шапка */
+.top { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; }
+.brand { display: flex; align-items: center; gap: 12px; }
+.brand h1 { margin: 0; font: 600 28px var(--head); }
+.help { width: 28px; height: 28px; border-radius: 50%; border: 1.5px solid var(--muted); color: var(--muted);
+  display: grid; place-items: center; font: 600 15px var(--ui); position: relative; outline: none; }
+.help .tip { display: none; position: absolute; top: 38px; left: -12px; width: 520px; z-index: 30; padding: 14px 16px;
+  background: var(--field); border: 1px solid var(--card-line); border-radius: 12px; box-shadow: 0 12px 30px rgba(16,24,40,.25);
+  font: 400 16px/1.45 var(--ui); color: var(--text); }
+.help:hover .tip, .help:focus .tip { display: block; }
+.tip p { margin: 0 0 8px; } .tip p:last-child { margin: 0; }
+.spacer { flex: 1; }
+.chip { display: inline-flex; align-items: center; gap: 8px; padding: 7px 14px; border-radius: 10px; border: 1px solid var(--card-line);
+  background: var(--card); font-size: 16px; }
+.chip b { font-weight: 600; font-family: var(--num); }
+.dot { width: 9px; height: 9px; border-radius: 50%; background: var(--muted); flex: none; }
+.dot.on { background: #2f7d4f; } .dot.warn { background: #d08a22; } .dot.off { background: var(--red); }
+.link { border: 0; background: none; padding: 0; color: var(--navy); font-weight: 600; text-decoration: underline; }
+.primary { border: 0; border-radius: 12px; padding: 0 24px; min-height: 46px; font-size: 18px; font-weight: 600; background: var(--navy); color: #fff; }
+.primary:hover:not(:disabled) { background: #172a55; }
+.ghost { border: 1px solid var(--navy); background: var(--field); color: var(--navy); border-radius: 10px; padding: 7px 14px;
+  font-size: 16px; font-weight: 600; white-space: nowrap; }
+.ghost:hover { background: var(--navy-soft); }
+
+/* Карточки */
+.card { background: var(--card); border: 1px solid var(--card-line); border-radius: 14px; padding: 16px 20px 18px; min-width: 0;
+  box-shadow: 0 1px 3px rgba(16,24,40,.1); position: relative; overflow: hidden; }
+.card h2, .label { margin: 0 0 10px; font: 600 14px var(--ui); letter-spacing: .9px; text-transform: uppercase; color: var(--muted); }
+.card h2 { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 10px; }
+.card h2 .hint { margin-left: auto; font-size: 14px; font-weight: 400; letter-spacing: 0; text-transform: none; }
+.label { display: block; margin: 14px 0 6px; }
+.card.idle { border-style: dashed; box-shadow: none; }
+.card.idle .body, .muted { color: var(--muted); }
+.card.idle .body { font-size: 17px; }
+.card.run::after, .step.run::after { content: ""; position: absolute; left: 0; top: 0; height: 3px; width: 40%; background: var(--navy);
+  animation: run 1.1s ease-in-out infinite; }
+@keyframes run { from { left: -40%; } to { left: 100%; } }
+.card.fail { border-color: var(--red); }
+.error { color: var(--red); background: var(--red-bg); border-radius: 8px; padding: 8px 12px; font-size: 16px; margin-top: 12px; }
+
+/* Вход */
+.auth { display: grid; grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr); gap: 16px; margin-top: 16px; align-items: start; }
+.big { margin: 2px 0 8px; font: 600 32px/1.2 var(--head); }
+.lead { margin: 0 0 6px; font-size: 19px; color: var(--muted); }
+.how { list-style: none; padding: 0; margin: 16px 0 12px; display: grid; gap: 10px; }
+.how li { display: grid; grid-template-columns: 34px minmax(0, 1fr); gap: 12px; align-items: start; }
+.how .i { width: 34px; height: 34px; border-radius: 50%; background: var(--navy); color: #fff; font: 600 17px/34px var(--num); text-align: center; }
+.how li span:last-child { padding-top: 4px; }
+.tags { display: flex; flex-wrap: wrap; gap: 6px; }
+.tag { border: 1px solid var(--card-line); background: var(--field); border-radius: 999px; padding: 2px 11px; font-size: 15px; }
+.tag b { font-family: var(--num); color: var(--navy); font-weight: 600; }
+.kw { font-family: var(--mono); font-size: 14.5px; }
+.tabs { display: flex; gap: 6px; margin-bottom: 14px; }
+.tab { flex: 1; padding: 8px; border-radius: 10px; border: 1px solid var(--card-line); background: var(--field); font-weight: 600; font-size: 17px; }
+.tab.on { background: var(--navy-soft); border-color: var(--navy); color: var(--navy); }
+.field { display: grid; gap: 4px; font-size: 16px; color: var(--muted); margin-bottom: 12px; }
+#authBtn { width: 100%; }
+
+/* Кабинет */
+.app { display: grid; grid-template-columns: 340px minmax(0, 1fr); gap: 16px; margin-top: 16px; align-items: start; }
+.topic-item { display: grid; gap: 1px; width: 100%; text-align: left; padding: 9px 14px; margin-bottom: 8px; border-radius: 10px;
+  border: 1px solid var(--card-line); background: var(--field); }
+.topic-item:hover { border-color: var(--navy); }
+.topic-item.on { border-color: var(--navy); background: var(--navy-soft); box-shadow: inset 4px 0 0 var(--navy); }
+.topic-item .name { font-weight: 600; }
+.topic-item .when { font-size: 15px; color: var(--muted); }
+.add { display: grid; gap: 8px; margin-top: 12px; }
+.examples { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
+.example { border: 1px solid var(--card-line); background: var(--field); border-radius: 999px; padding: 3px 12px; font-size: 15px; }
+.example:hover { border-color: var(--navy); }
+.main { display: grid; gap: 16px; min-width: 0; }
+.topic-head { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.topic-title { font: 600 26px/1.2 var(--head); }
+.desc { margin: 0; font-size: 18px; }
+.next { margin-top: 12px; font-size: 16px; color: var(--muted); }
+.row { display: flex; gap: 10px; margin-top: 12px; }
+
+.steps { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; }
+.step { position: relative; overflow: hidden; background: var(--card); border: 1px solid var(--card-line); border-radius: 14px; padding: 10px 16px 12px; min-width: 0; }
+.step .n { font: 600 14px var(--ui); letter-spacing: .9px; text-transform: uppercase; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.step b { display: block; font: 600 30px/1.25 var(--num); color: var(--navy); }
+.step .sub { font-size: 15px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.step.idle { border-style: dashed; } .step.idle b { color: var(--muted); }
+.step.fail { border-color: var(--red); } .step.fail b, .step.fail .sub { color: var(--red); }
+
+.archive { display: flex; flex-wrap: wrap; gap: 6px; margin: -2px 0 12px; }
+.arch { border: 1px solid var(--card-line); background: var(--field); border-radius: 8px; padding: 2px 10px; font: 15px var(--num); }
+.arch.on { border-color: var(--navy); background: var(--navy-soft); color: var(--navy); font-weight: 600; }
+.overview { margin: 0 0 14px; font-size: 19px; line-height: 1.55; border-left: 4px solid var(--navy); background: var(--field);
+  border-radius: 0 10px 10px 0; padding: 10px 16px; }
+.stories { list-style: none; margin: 0; padding: 0; counter-reset: story; display: grid; gap: 10px; }
+.story { counter-increment: story; position: relative; padding: 10px 16px 12px 54px; border: 1px solid var(--line); border-radius: 12px; background: var(--field); }
+.story::before { content: counter(story); position: absolute; left: 14px; top: 12px; width: 27px; height: 27px; border-radius: 50%;
+  background: var(--navy); color: #fff; font: 600 15px/27px var(--num); text-align: center; }
+.story .st { font-weight: 600; font-size: 19.5px; line-height: 1.35; }
+.story p { margin: 3px 0 8px; }
+.links { display: flex; flex-wrap: wrap; gap: 6px; }
+.src { font-size: 15px; text-decoration: none; color: var(--navy); background: var(--navy-soft); border-radius: 7px; padding: 2px 9px; white-space: nowrap; }
+.src span { color: var(--muted); font-family: var(--num); }
+.src:hover { text-decoration: underline; }
+.more { margin-top: 12px; font-size: 16px; }
+.more a { display: block; margin-top: 3px; }
+details { margin-top: 14px; }
+summary { cursor: pointer; color: var(--navy); font-weight: 600; font-size: 16px; }
+.how-grid { display: grid; grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr); gap: 18px; margin-top: 4px; }
+.rej { padding: 6px 0; border-bottom: 1px solid var(--line); font-size: 16px; }
+.rej:last-child { border-bottom: 0; }
+.rej a { font-weight: 600; text-decoration: none; } .rej a:hover { text-decoration: underline; }
+.rej .why { color: var(--amber); }
+.toast { position: fixed; left: 50%; top: 16px; transform: translateX(-50%); z-index: 50; background: var(--red-bg); color: var(--red);
+  border: 1px solid var(--red); border-radius: 10px; padding: 10px 18px; font-size: 17px; display: none; max-width: 80vw; }
+.toast.show { display: block; }
+
+@media (max-width: 1100px) {
+  .wrap { margin: 8px auto; padding: 0 8px; }
+  .frame { padding: 12px 10px 16px; border-radius: 14px; }
+  .brand h1 { font-size: 23px; }
+  .spacer { display: none; }
+  .auth, .app, .how-grid { grid-template-columns: minmax(0, 1fr); }
+  .big { font-size: 25px; }
+  .steps { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .step .n { white-space: normal; }
+  .topic-head .primary { width: 100%; }
+  .help .tip { width: min(520px, 86vw); }
+  .story { padding-left: 46px; } .story::before { left: 10px; }
+}
+</style>
+</head>
+<body>
+<div class="wrap"><div class="frame">
+  <header class="top">
+    <div class="brand">
+      <svg width="36" height="36" viewBox="0 0 32 32" aria-hidden="true"><rect width="32" height="32" rx="7" fill="#1f3366"/><path d="M8 10h16M8 16h16M8 22h10" stroke="#fff" stroke-width="3" stroke-linecap="round"/></svg>
+      <h1>Сводка</h1>
+      <span class="help" tabindex="0">?<span class="tip">
+        <p><b>Сборщик</b> каждые 15 минут читает RSS-ленты <span class="feeds-n">24</span> изданий и копит новости в базе.</p>
+        <p><b>① Новости за сутки</b> — всё, что собрано за последние 24 часа.</p>
+        <p><b>② По словам темы</b> — новости, где есть ключи темы. Ключи при создании темы предложил ИИ, их можно поправить.</p>
+        <p><b>③ ИИ: о теме</b> — модель читает каждого кандидата и решает, о теме ли новость; почему отброшена — в «Как собрано».</p>
+        <p><b>④ ИИ: сюжеты</b> — модель склеивает одну новость из разных изданий в сюжет и пишет коротко, со ссылками на все источники.</p>
+        <p>Каждый день в 20:00 по Москве — новая сводка по каждой теме.</p>
+      </span></span>
+    </div>
+    <span class="spacer"></span>
+    <span class="chip" id="collectorChip"><span class="dot" id="collectorDot"></span><span id="collectorText">Сборщик — проверяю…</span></span>
+    <span class="chip" id="userChip" hidden><span><span id="userEmail"></span> · <button class="link" id="logoutBtn" type="button">Выйти</button></span></span>
+  </header>
+
+  <main class="auth" id="authView" hidden>
+    <section class="card">
+      <div class="big">Сводка новостей по вашей теме</div>
+      <p class="lead">Каждый вечер в 20:00 — главное за сутки из <span class="feeds-n">24</span> изданий: коротко, по сюжетам, со ссылками на источники.</p>
+      <ol class="how">
+        <li><span class="i">1</span><span><b>Вы пишете тему</b> — политик, законопроект, компания, событие.</span></li>
+        <li><span class="i">2</span><span><b>ИИ разбирает тему</b>: что к ней относится и по каким словам её искать.</span></li>
+        <li><span class="i">3</span><span><b>Сборщик</b> каждые 15 минут читает ленты изданий.</span></li>
+        <li><span class="i">4</span><span><b>ИИ отбирает новости по смыслу</b>, склеивает дубли из разных изданий и пишет сводку.</span></li>
+      </ol>
+      <div class="tags" id="sources"></div>
+    </section>
+    <section class="card">
+      <div class="tabs"><button class="tab on" type="button" data-mode="login">Вход</button><button class="tab" type="button" data-mode="register">Регистрация</button></div>
+      <form id="authForm">
+        <label class="field">Почта<input type="email" id="email" autocomplete="email" required></label>
+        <label class="field">Пароль<input type="password" id="password" autocomplete="current-password" minlength="8" required></label>
+        <button class="primary" id="authBtn">Войти</button>
+        <div class="error" id="authError" hidden></div>
+      </form>
+    </section>
+  </main>
+
+  <main class="app" id="appView" hidden>
+    <aside class="card">
+      <h2>Мои темы <span class="hint" id="topicsHint"></span></h2>
+      <div id="topicList"></div>
+      <form class="add" id="addForm">
+        <input id="topicInput" placeholder="Фамилия, законопроект…" maxlength="200" autocomplete="off" aria-label="Новая тема">
+        <button class="primary" id="addBtn">Добавить тему</button>
+      </form>
+      <div class="muted" id="limitNote" hidden></div>
+      <div class="examples" id="examples"></div>
+    </aside>
+    <section class="main">
+      <div class="card idle" id="topicCard"><div class="body"></div></div>
+      <div class="steps" id="steps"></div>
+      <div class="card idle" id="digestCard">
+        <h2><span id="digestTitle">Сводка</span> <span class="hint" id="digestHint"></span></h2>
+        <div class="body" id="digestBody"></div>
+      </div>
+    </section>
+  </main>
+</div></div>
+<div class="toast" id="toast"></div>
+
+<script>
+const EXAMPLES = ["Кирилл Дмитриев", "Ключевая ставка ЦБ", "Законопроект о маркетплейсах"];
+const MONTHS = ["января", "февраля", "марта", "апреля", "мая", "июня", "июля", "августа", "сентября", "октября", "ноября", "декабря"];
+const STEPS = [["① Новости за сутки"], ["② По словам темы"], ["③ ИИ: о теме"], ["④ ИИ: сюжеты"]];
+const STEP_OF = {articles: 1, candidates: 2, judge: 3, stories: 4};
+
+const $ = id => document.getElementById(id);
+const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"}[c]));
+const num = n => (+n).toLocaleString("ru-RU");
+const dec = x => (+x).toFixed(1).replace(".", ",");
+const two = n => String(n).padStart(2, "0");
+const hm = iso => { const d = new Date(iso); return `${two(d.getHours())}:${two(d.getMinutes())}`; };
+const when = iso => { const d = new Date(iso); return `${d.getDate()} ${MONTHS[d.getMonth()]}, ${hm(iso)}`; };
+const plural = (n, one, few, many) => {
+  const m10 = n % 10, m100 = n % 100;
+  return `${num(n)} ${m10 === 1 && m100 !== 11 ? one : m10 >= 2 && m10 <= 4 && (m100 < 12 || m100 > 14) ? few : many}`;
+};
+let status = null, topics = [], current = null, digests = [], shown = null, running = false, mode = "login";
+
+function toast(text) {
+  const t = $("toast");
+  t.textContent = text;
+  t.classList.add("show");
+  clearTimeout(toast.timer);
+  toast.timer = setTimeout(() => t.classList.remove("show"), 6000);
+}
+
+function setCard(id, state, html) {
+  $(id).className = `card ${state}`;
+  if (html !== undefined) $(id).querySelector(".body").innerHTML = html;
+}
+
+async function api(path, options = {}) {
+  const res = await fetch(path, {headers: {"Content-Type": "application/json"}, ...options});
+  if (res.status === 401 && path !== "/api/me") { showAuth(); throw new Error("Войдите в аккаунт"); }
+  if (!res.ok) {
+    let detail = `Сервер ответил ${res.status}`;
+    try { const body = await res.json(); detail = typeof body.detail === "string" ? body.detail : "Проверьте поля формы"; } catch {}
+    throw new Error(detail);
+  }
+  return res;
+}
+const getJSON = async path => (await api(path)).json();
+const send = async (path, body, method = "POST") => (await api(path, {method, body: JSON.stringify(body ?? {})})).json();
+
+// ---------- шапка: сборщик ----------
+async function loadStatus() {
+  try { status = await getJSON("/api/status"); }
+  catch { $("collectorDot").className = "dot off"; $("collectorText").textContent = "Сервер не отвечает"; return; }
+  const c = status.collector, failed = Object.entries(c.errors || {});
+  $("collectorDot").className = `dot ${!c.at ? "" : failed.length > 3 ? "warn" : "on"}`;
+  $("collectorText").innerHTML = c.at
+    ? `Сборщик: обход в <b>${hm(c.at)}</b> · ${c.ok} из ${c.feeds} лент · <b>${num(status.articles)}</b> новостей за сутки`
+    : "Сборщик: первый обход лент…";
+  $("collectorChip").title = failed.length ? "Не ответили: " + failed.map(([s, e]) => `${s} — ${e}`).join("; ") : `Обход каждые ${status.every} мин`;
+  $("sources").innerHTML = status.feeds.map(f => `<span class="tag">${esc(f)}</span>`).join("");
+  document.querySelectorAll(".feeds-n").forEach(n => { n.textContent = status.feeds.length; });
+}
+
+// ---------- вход ----------
+function setMode(m) {
+  mode = m;
+  document.querySelectorAll(".tab").forEach(t => t.classList.toggle("on", t.dataset.mode === m));
+  $("authBtn").textContent = m === "login" ? "Войти" : "Зарегистрироваться";
+  $("password").autocomplete = m === "login" ? "current-password" : "new-password";
+  $("authError").hidden = true;
+}
+document.querySelectorAll(".tab").forEach(t => t.addEventListener("click", () => setMode(t.dataset.mode)));
+$("authForm").addEventListener("submit", async e => {
+  e.preventDefault();
+  $("authBtn").disabled = true;
+  try {
+    const me = await send(`/api/${mode}`, {email: $("email").value, password: $("password").value});
+    $("password").value = "";
+    await showApp(me.email);
+  } catch (err) { $("authError").textContent = err.message; $("authError").hidden = false; }
+  $("authBtn").disabled = false;
+});
+$("logoutBtn").addEventListener("click", async () => { await send("/api/logout").catch(() => {}); showAuth(); });
+
+function showAuth() {
+  $("appView").hidden = true; $("userChip").hidden = true; $("authView").hidden = false;
+  current = null; topics = [];
+}
+
+async function showApp(email) {
+  $("authView").hidden = true; $("appView").hidden = false; $("userChip").hidden = false;
+  $("userEmail").textContent = email;
+  topics = await getJSON("/api/topics");
+  if (topics.length) await selectTopic(topics[0].id);
+  else { current = null; renderTopics(); renderEmpty(); }
+}
+
+// ---------- темы ----------
+const limit = () => status?.topics_per_user || 3;
+
+function renderTopics() {
+  $("topicsHint").textContent = `${topics.length} из ${limit()}`;
+  $("topicList").innerHTML = topics.map(t => `<button class="topic-item ${t.id === current?.id ? "on" : ""}" type="button" data-id="${t.id}">
+      <span class="name">${esc(t.brief.title)}</span>
+      <span class="when">${t.last ? `сводка ${when(t.last)}` : "сводки ещё нет"}</span></button>`).join("");
+  const full = topics.length >= limit();
+  $("addForm").hidden = full;
+  $("examples").hidden = full;
+  $("limitNote").hidden = !full;
+  $("limitNote").textContent = `Тем — не больше ${limit()}. Чтобы добавить новую, удалите ненужную.`;
+}
+$("topicList").addEventListener("click", e => {
+  const b = e.target.closest(".topic-item");
+  if (b && !running) selectTopic(+b.dataset.id);
+});
+$("examples").innerHTML = "Например: " + EXAMPLES.map(x => `<button class="example" type="button">${esc(x)}</button>`).join("");
+$("examples").addEventListener("click", e => {
+  const b = e.target.closest(".example");
+  if (b) { $("topicInput").value = b.textContent; $("topicInput").focus(); }
+});
+
+function renderEmpty() {
+  setCard("topicCard", "idle", "Добавьте тему слева — фамилию политика, законопроект или компанию. ИИ разберёт её, и первая сводка за последние сутки соберётся сразу; дальше — каждый день в 20:00 по Москве.");
+  renderSteps(null);
+  $("digestTitle").textContent = "Сводка"; $("digestHint").textContent = "";
+  setCard("digestCard", "idle", "Здесь будет сводка: главное за сутки и сюжеты со ссылками на источники.");
+}
+
+async function selectTopic(id) {
+  current = topics.find(t => t.id === id);
+  shown = null;
+  renderTopics(); renderTopic();
+  digests = await getJSON(`/api/topics/${id}/digests`);
+  if (digests.length) await showDigest(digests[0].id);
+  else {
+    renderSteps(null);
+    $("digestTitle").textContent = "Сводка"; $("digestHint").textContent = "";
+    setCard("digestCard", "idle", `Сводки ещё нет — нажмите «Собрать сейчас» или дождитесь ${nextRun()}.`);
+  }
+}
+
+function nextRun() {
+  const at = status?.digest_at || "20:00", [h, m] = at.split(":").map(Number);
+  const msk = new Date(Date.now() + 3 * 3600e3);  // московское время в UTC-полях
+  return `${msk.getUTCHours() * 60 + msk.getUTCMinutes() < h * 60 + m ? "сегодня" : "завтра"} в ${at} по Москве`;
+}
+
+function renderTopic() {
+  const b = current.brief, hits = shown?.keywords || {};
+  setCard("topicCard", "", `<div class="topic-head"><div class="topic-title">${esc(b.title)}</div><span class="spacer"></span>
+      <button class="ghost" type="button" data-act="edit">Изменить</button><button class="ghost" type="button" data-act="delete">Удалить</button>
+      <button class="primary" type="button" data-act="run" ${running ? "disabled" : ""}>${running ? "Собирается…" : "Собрать сейчас"}</button></div>
+    <span class="label">Как ИИ понял тему</span><p class="desc">${esc(b.description)}</p>
+    <span class="label">Ищем по словам${shown ? " · совпадений за сутки" : ""}</span>
+    <div class="tags">${b.keywords.map(k => `<span class="tag kw">${esc(k)}${hits[k] ? ` <b>${hits[k]}</b>` : ""}</span>`).join("")}</div>
+    <div class="next">Следующая сводка по расписанию — ${nextRun()}</div>`);
+}
+
+function renderEdit() {
+  const b = current.brief;
+  setCard("topicCard", "", `<div class="topic-title">${esc(b.title)}</div>
+    <label class="label" for="descInput">Что относится к теме — по этому описанию ИИ отбирает новости</label>
+    <textarea id="descInput" rows="3">${esc(b.description)}</textarea>
+    <label class="label" for="kwInput">Ключи поиска — по одному в строке, основой слова: «набиуллин» найдёт все падежи</label>
+    <textarea id="kwInput" rows="6">${esc(b.keywords.join("\n"))}</textarea>
+    <div class="row"><button class="primary" type="button" data-act="save">Сохранить</button><button class="ghost" type="button" data-act="cancel">Отмена</button></div>`);
+}
+
+$("topicCard").addEventListener("click", async e => {
+  const act = e.target.closest("[data-act]")?.dataset.act;
+  if (!act || !current) return;
+  if (act === "run") runDigest();
+  else if (act === "edit") renderEdit();
+  else if (act === "cancel") renderTopic();
+  else if (act === "save") {
+    try {
+      current.brief = await send(`/api/topics/${current.id}`, {description: $("descInput").value,
+        keywords: $("kwInput").value.split("\n")}, "PUT");
+      renderTopics(); renderTopic();
+    } catch (err) { toast(err.message); }
+  } else if (act === "delete") {
+    if (!confirm(`Удалить тему «${current.brief.title}» и все её сводки?`)) return;
+    try {
+      await send(`/api/topics/${current.id}`, null, "DELETE");
+      topics = topics.filter(t => t.id !== current.id);
+      if (topics.length) await selectTopic(topics[0].id); else { current = null; renderTopics(); renderEmpty(); }
+    } catch (err) { toast(err.message); }
+  }
+});
+
+$("addForm").addEventListener("submit", async e => {
+  e.preventDefault();
+  const query = $("topicInput").value.trim();
+  if (!query || running) return;
+  $("addBtn").disabled = true;
+  current = null; shown = null; renderTopics();
+  setCard("topicCard", "run", `<div class="topic-title">${esc(query)}</div><p class="desc muted">ИИ разбирает тему: что к ней относится и по каким словам её искать…</p>`);
+  renderSteps(null);
+  setCard("digestCard", "idle", "Сводка соберётся сразу после разбора темы.");
+  try {
+    const topic = await send("/api/topics", {query});
+    topics.push(topic);
+    $("topicInput").value = "";
+    current = topic; digests = [];
+    renderTopics(); renderTopic();
+    runDigest();
+  } catch (err) {
+    toast(err.message);
+    if (topics.length) await selectTopic(topics[0].id); else renderEmpty();
+  }
+  $("addBtn").disabled = false;
+});
+
+// ---------- шаги ----------
+function step(i, state, value, sub) {
+  const el = $("steps").children[i - 1];
+  el.className = `step ${state}`;
+  if (value !== undefined) el.querySelector("b").textContent = value;
+  if (sub !== undefined) { el.querySelector(".sub").textContent = sub; el.querySelector(".sub").title = sub; }
+}
+
+function renderSteps(stats) {
+  $("steps").innerHTML = STEPS.map(([name]) => `<div class="step idle"><div class="n">${name}</div><b>—</b><div class="sub">&nbsp;</div></div>`).join("");
+  if (!stats) return;
+  step(1, "", num(stats.articles), `из ${plural(stats.sources, "издания", "изданий", "изданий")}`);
+  step(2, "", num(stats.candidates), stats.candidates > stats.checked ? `проверено ${stats.checked} самых точных` : "кандидаты на проверку");
+  step(3, "", num(stats.relevant), `из ${stats.checked} проверенных`);
+  step(4, "", num(stats.stories), plural(stats.stories, "сюжет", "сюжета", "сюжетов").replace(/^\S+ /, ""));
+}
+
+async function runDigest() {
+  if (running || !current) return;
+  running = true;
+  const topic = current;
+  renderTopic();
+  let res;
+  try { res = await api(`/api/topics/${topic.id}/run`, {method: "POST"}); }
+  catch (err) { toast(err.message); running = false; if (current === topic) renderTopic(); return; }  // прежняя сводка остаётся
+  renderSteps(null);
+  step(1, "run", "…", "читаю базу сборщика");
+  $("digestTitle").textContent = "Сводка"; $("digestHint").textContent = "";
+  setCard("digestCard", "idle", "Сводка появится здесь, когда ИИ отберёт новости и напишет сюжеты.");
+  try {
+    const reader = res.body.getReader(), decoder = new TextDecoder();
+    let buffer = "";
+    for (;;) {
+      const {value, done} = await reader.read();
+      if (done) break;
+      buffer += decoder.decode(value, {stream: true});
+      let i;
+      while ((i = buffer.indexOf("\n")) >= 0) {
+        const line = buffer.slice(0, i).trim();
+        buffer = buffer.slice(i + 1);
+        if (line) handle(JSON.parse(line), topic);
+      }
+    }
+  } catch (err) {
+    toast(err.message);
+    document.querySelectorAll(".step.run").forEach(s => { s.className = "step fail"; });
+  }
+  running = false;
+  if (current === topic) renderTopic();
+  document.querySelectorAll(".step.run").forEach(s => { s.className = "step idle"; });
+}
+
+function handle(ev, topic) {
+  if (current !== topic) return;
+  if (ev.type === "articles") {
+    step(1, "", num(ev.count), `из ${plural(ev.sources, "издания", "изданий", "изданий")}`);
+    step(2, "run", "…", "ищу ключи темы");
+  } else if (ev.type === "candidates") {
+    step(2, "", num(ev.count), ev.count > ev.checked ? `проверим ${ev.checked} самых точных` : "кандидаты на проверку");
+    step(3, "run", "…", `ИИ читает: 0 из ${ev.checked}`);
+  } else if (ev.type === "judge") {
+    const finished = ev.done >= ev.total;
+    step(3, finished ? "" : "run", num(ev.relevant), finished ? `из ${ev.total} проверенных` : `ИИ читает: ${ev.done} из ${ev.total}`);
+    if (finished && !ev.relevant) step(4, "", "0", "нечего склеивать");
+  } else if (ev.type === "writing") {
+    step(4, "run", "…", `ИИ пишет по ${plural(ev.count, "новости", "новостям", "новостям")}`);
+  } else if (ev.type === "done") {
+    const d = ev.digest;
+    step(4, "", num(d.stats.stories), plural(d.stats.stories, "сюжет", "сюжета", "сюжетов").replace(/^\S+ /, ""));
+    digests.unshift({id: d.id, created: d.created, auto: d.auto, stats: d.stats});
+    topic.last = d.created;
+    shown = d;
+    renderTopics(); renderDigest();
+  } else if (ev.type === "error") {
+    step(STEP_OF[ev.step] || 4, "fail", "✗", ev.message);
+    toast(ev.message);
+  }
+}
+
+// ---------- сводка ----------
+async function showDigest(id) {
+  shown = await getJSON(`/api/digests/${id}`);
+  renderTopic(); renderSteps(shown.stats); renderDigest();
+}
+$("digestBody").addEventListener("click", e => {
+  const b = e.target.closest(".arch");
+  if (b && !running) showDigest(+b.dataset.id);
+});
+
+const source = l => `<a class="src" href="${esc(l.url)}" target="_blank" rel="noopener" title="${esc(l.title)}">${esc(l.source)} <span>${hm(l.published)}</span></a>`;
+
+function renderDigest() {
+  const d = shown, s = d.stats;
+  $("digestTitle").textContent = `Сводка за ${when(d.created)}`;
+  $("digestHint").textContent = `${d.auto ? "по расписанию" : "вручную"} · ${dec(s.seconds)} с · ${num(s.tokens)} токенов`;
+  const archive = digests.length > 1 ? `<div class="archive">${digests.map(x =>
+    `<button class="arch ${x.id === d.id ? "on" : ""}" type="button" data-id="${x.id}">${when(x.created)}${x.auto ? "" : " · вручную"}</button>`).join("")}</div>` : "";
+  const stories = d.stories.map(st => `<li class="story"><div class="st">${esc(st.title)}</div><p>${esc(st.summary)}</p>
+      <div class="links">${st.links.map(source).join("")}</div></li>`).join("");
+  const more = d.more.length ? `<div class="more"><span class="label">Ещё по теме</span>${d.more.map(l =>
+    `<a href="${esc(l.url)}" target="_blank" rel="noopener">${esc(l.title)}</a>`).join("")}</div>` : "";
+  const rejected = d.rejected.length ? d.rejected.map(r => `<div class="rej"><a href="${esc(r.url)}" target="_blank" rel="noopener">${esc(r.title)}</a>
+      <div><span class="muted">${esc(r.source)}</span> — <span class="why">${esc(r.reason)}</span></div></div>`).join("")
+    : `<div class="muted">Ничего: все кандидаты оказались о теме.</div>`;
+  const tags = obj => Object.entries(obj).map(([k, n]) => `<span class="tag">${esc(k)} <b>${num(n)}</b></span>`).join("");
+  setCard("digestCard", "", `${archive}<p class="overview">${esc(d.overview)}</p>
+    ${stories ? `<ol class="stories">${stories}</ol>` : ""}${more}
+    <details><summary>Как собрано: ${plural(s.candidates, "новость", "новости", "новостей")} по словам → ${s.relevant} о теме, отброшено ${d.rejected.length}</summary>
+      <div class="how-grid">
+        <div><span class="label">Отбросил ИИ — и почему</span>${rejected}
+          ${s.candidates > s.checked ? `<div class="muted">Ещё ${s.candidates - s.checked} совпадений не проверялись: модель читает не больше ${s.checked} самых точных.</div>` : ""}</div>
+        <div><span class="label">Совпадения по ключам</span><div class="tags kw">${tags(d.keywords) || "—"}</div>
+          <span class="label">Новости за сутки по изданиям</span><div class="tags">${tags(d.by_source)}</div>
+          <span class="label">Модель</span><div>${esc(s.model)} · ${num(s.tokens)} токенов · ${dec(s.seconds)} с</div></div>
+      </div></details>`);
+}
+
+loadStatus().then(async () => {
+  const res = await fetch("/api/me");
+  if (res.ok) await showApp((await res.json()).email); else showAuth();
+}).catch(err => toast(err.message));
+setInterval(loadStatus, 60000);
+</script>
+</body>
+</html>
