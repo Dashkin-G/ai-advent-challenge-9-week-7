@@ -1,0 +1,35 @@
+name: AI-ревью pull request
+description: Ревью PR локальной моделью в Ollama — изменения через MCP-сервер git, RAG по коду и документации, комментарий в PR
+# Для self-hosted раннера на Windows, где работает Ollama с qwen3.5:4b и bge-m3. Только для события pull_request.
+runs:
+  using: composite
+  steps:
+    - name: Окружение ассистента
+      shell: pwsh
+      run: |
+        # venv — в кэше инструментов раннера: со второго запуска пакеты уже стоят
+        $venv = Join-Path $env:RUNNER_TOOL_CACHE "ai-review-venv"
+        if (-not (Test-Path "$venv/Scripts/python.exe")) { py -3.12 -m venv $venv }
+        & "$venv/Scripts/python.exe" -m pip install --quiet --disable-pip-version-check -r "$env:GITHUB_ACTION_PATH/requirements.txt"
+        if ($LASTEXITCODE) { exit $LASTEXITCODE }  # pwsh сам не останавливается на ошибке программы
+        "AI_REVIEW_PYTHON=$venv/Scripts/python.exe" >> $env:GITHUB_ENV
+
+    - name: Ревью
+      shell: pwsh
+      working-directory: ${{ github.action_path }}
+      env:
+        PR_TITLE: ${{ github.event.pull_request.title }}  # заголовок пишет автор PR — только через переменную
+        DATA_DIR: ${{ runner.tool_cache }}/ai-review-data  # кэш векторов bge-m3 между запусками
+        PYTHONUTF8: "1"
+      run: |
+        & $env:AI_REVIEW_PYTHON -m app.review --repo $env:GITHUB_WORKSPACE `
+          --base ${{ github.event.pull_request.base.sha }} --head ${{ github.event.pull_request.head.sha }} `
+          --title $env:PR_TITLE --out "$env:RUNNER_TEMP/review.md"
+        if ($LASTEXITCODE) { exit $LASTEXITCODE }
+        Get-Content "$env:RUNNER_TEMP/review.md" -Raw >> $env:GITHUB_STEP_SUMMARY
+
+    - name: Комментарий в PR
+      shell: pwsh
+      env:
+        GH_TOKEN: ${{ github.token }}
+      run: gh pr comment ${{ github.event.pull_request.number }} --repo ${{ github.repository }} --body-file "$env:RUNNER_TEMP/review.md"

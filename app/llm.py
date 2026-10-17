@@ -57,9 +57,13 @@ async def embed(texts):
     return response.json()["embeddings"]
 
 
-async def chat(messages):
-    """Ответ потоком: {"type": "text"} кусочками, в конце {"type": "done"} со счётчиками."""
-    body = {"model": config.MODEL, "messages": messages, "stream": True, "think": False, "options": OPTIONS}
+async def chat(messages, options=None, schema=None):
+    """Ответ потоком: {"type": "text"} кусочками, в конце {"type": "done"} со счётчиками.
+    options дополняют OPTIONS; schema — JSON Schema, от которой Ollama не даст модели отойти."""
+    body = {"model": config.MODEL, "messages": messages, "stream": True, "think": False,
+            "options": {**OPTIONS, **(options or {})}}
+    if schema:
+        body["format"] = schema
     try:
         async with _client() as client, client.stream("POST", "/api/chat", json=body) as response:
             if response.status_code == 404:

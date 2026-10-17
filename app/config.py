@@ -7,6 +7,7 @@ ROOT = Path(__file__).parent.parent
 # Проект, о котором отвечает ассистент: его документация и git
 PROJECT_DIR = Path(os.getenv("PROJECT_DIR", ROOT.parent / "ml-student-dropout")).resolve()
 DOCS = ["README.md", "docs/*.md"]
+CODE = ["*.py"]  # код проекта — в RAG ревью вместе с документацией
 
 OLLAMA_URL = os.getenv("OLLAMA_URL", "http://127.0.0.1:11434")
 MODEL = os.getenv("MODEL", "qwen3.5:4b")

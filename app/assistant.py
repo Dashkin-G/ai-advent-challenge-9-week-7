@@ -101,10 +101,10 @@ async def answer(question):
     except llm.LLMError as exc:
         yield {"type": "error", "step": step, "message": str(exc)}
     except Exception as exc:  # MCP, git, файлы — показываем словами, а не падением
-        yield {"type": "error", "step": step, "message": _reason(exc)}
+        yield {"type": "error", "step": step, "message": reason(exc)}
 
 
-def _reason(exc):
+def reason(exc):
     """Причина ошибки; клиент MCP бросает ExceptionGroup — достаём первую настоящую."""
     while isinstance(exc, BaseExceptionGroup) and exc.exceptions:
         exc = exc.exceptions[0]
@@ -117,7 +117,7 @@ async def project():
         _, calls = await call_tools([("git_branch", {})])
         return {"name": config.PROJECT_DIR.name, "branch": calls[0]["result"]["branch"] if calls[0]["ok"] else None}
     except Exception as exc:
-        return {"name": config.PROJECT_DIR.name, "branch": None, "error": _reason(exc)}
+        return {"name": config.PROJECT_DIR.name, "branch": None, "error": reason(exc)}
 
 
 def dumps(event):
