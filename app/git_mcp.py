@@ -1,4 +1,4 @@
-"""MCP-сервер git: ветка, изменения, файлы и diff проекта, изменения pull request. Только чтение."""
+"""MCP-сервер git: ветка, изменения, файлы и diff проекта, история, изменения pull request. Только чтение."""
 import subprocess
 from typing import Annotated, Any
 
@@ -10,10 +10,10 @@ from app import config
 
 server = MCPServer(
     name="git",
-    version="1.1.0",
+    version="1.2.0",
     instructions="Git-репозиторий проекта, о котором отвечает ассистент: текущая ветка, незакоммиченные "
-                 "изменения, список файлов, diff, файлы любого коммита и изменения pull request между двумя "
-                 "ветками. Инструменты только читают, ничего не меняют.",
+                 "изменения, список файлов, diff, история коммитов, файлы любого коммита и изменения pull request "
+                 "между двумя ветками. Инструменты только читают, ничего не меняют.",
 )
 
 STATUS = {"M": "изменён", "A": "добавлен", "D": "удалён", "R": "переименован", "?": "новый", "U": "конфликт"}
@@ -84,6 +84,28 @@ def git_diff(
     lines = git("diff", "HEAD", "--", path or ".").splitlines()
     return {"path": path or ".", "lines": len(lines), "truncated": len(lines) > max_lines,
             "diff": "\n".join(lines[:max_lines])}
+
+
+@server.tool()
+def git_log(
+    n: Annotated[int, Field(ge=1, le=50, description="Сколько последних коммитов")] = 20,
+    path: Annotated[str, Field(description="Только коммиты, которые меняли этот файл или папку; пусто — все")] = "",
+    oldest_first: Annotated[bool, Field(description="Сначала старые коммиты — история по порядку")] = False,
+) -> dict[str, Any]:
+    """История текущей ветки без merge-коммитов, новые сверху: дата, хеш, сообщение, изменённые файлы и
+    сколько строк добавлено и удалено."""
+    commits = []
+    out = git("log", f"-{n}", "--no-merges", *(["--reverse"] if oldest_first else []), *PLAIN, "--numstat",
+              "--date=format:%d.%m.%Y", "--format=%x1e%h%x1f%ad%x1f%s", "--", path or ".")
+    for record in out.split("\x1e")[1:]:
+        head, *lines = record.strip("\n").split("\n")
+        sha, date, subject = head.split("\x1f")
+        stats = [line.split("\t", 2) for line in lines if line]
+        commits.append({"date": date, "hash": sha, "subject": subject, "files": [file for _, _, file in stats],
+                        # «-» вместо числа — двоичный файл
+                        "added": sum(int(a) for a, _, _ in stats if a != "-"),
+                        "deleted": sum(int(d) for _, d, _ in stats if d != "-")})
+    return {"count": len(commits), "commits": commits}
 
 
 @server.tool()

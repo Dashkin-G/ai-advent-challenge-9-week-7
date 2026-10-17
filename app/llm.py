@@ -57,13 +57,16 @@ async def embed(texts):
     return response.json()["embeddings"]
 
 
-async def chat(messages, options=None, schema=None):
-    """Ответ потоком: {"type": "text"} кусочками, в конце {"type": "done"} со счётчиками.
-    options дополняют OPTIONS; schema — JSON Schema, от которой Ollama не даст модели отойти."""
+async def chat(messages, options=None, schema=None, tools=None):
+    """Ответ потоком: {"type": "text"} кусочками, вызовы инструментов — {"type": "tool_calls"}, в конце
+    {"type": "done"} со счётчиками. options дополняют OPTIONS; schema — JSON Schema, от которой Ollama не даст
+    модели отойти; tools — инструменты, которые модель может вызвать сама."""
     body = {"model": config.MODEL, "messages": messages, "stream": True, "think": False,
             "options": {**OPTIONS, **(options or {})}}
     if schema:
         body["format"] = schema
+    if tools:
+        body["tools"] = tools
     try:
         async with _client() as client, client.stream("POST", "/api/chat", json=body) as response:
             if response.status_code == 404:
@@ -78,6 +81,8 @@ async def chat(messages, options=None, schema=None):
                     raise LLMError(part["error"])
                 if text := part.get("message", {}).get("content"):
                     yield {"type": "text", "text": text}
+                if calls := part.get("message", {}).get("tool_calls"):
+                    yield {"type": "tool_calls", "calls": calls}
                 if part.get("done"):
                     yield {"type": "done", **_counters(part)}
     except httpx2.ConnectError:

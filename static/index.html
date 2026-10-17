@@ -45,6 +45,9 @@ button { font: inherit; color: inherit; cursor: pointer; }
 .help:hover .tip, .help:focus .tip { display: block; }
 .tip p { margin: 0 0 8px; } .tip p:last-child { margin: 0; }
 .spacer { flex: 1; }
+.nav { padding: 7px 14px; border-radius: 10px; border: 1px solid var(--navy); background: var(--field); color: var(--navy);
+  font-size: 16px; font-weight: 600; text-decoration: none; white-space: nowrap; }
+.nav:hover { background: var(--navy-soft); }
 .chip { display: inline-flex; align-items: center; gap: 8px; padding: 7px 14px; border-radius: 10px; border: 1px solid var(--card-line);
   background: var(--card); font-size: 16px; }
 .chip b { font-weight: 600; }
@@ -145,6 +148,7 @@ pre { margin: 6px 0 2px; padding: 8px 10px; background: var(--card); border-radi
         <p><b>③ Ответ</b> — локальная модель на этом компьютере, по контексту и фрагментам, со ссылками на файлы.</p>
       </span></span>
     </div>
+    <a class="nav" href="/files">Файлы проекта →</a>
     <span class="spacer"></span>
     <span class="chip" id="projectChip"><span class="dot" id="projectDot"></span><span>Проект: <b id="projectName">—</b> · ветка <b id="branchName">—</b></span></span>
     <span class="chip" id="modelChip"><span class="dot" id="ollamaDot"></span><span id="modelText">Ollama — проверяю…</span></span>

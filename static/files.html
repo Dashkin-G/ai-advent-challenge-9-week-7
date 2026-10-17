@@ -1,0 +1,518 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Файлы проекта</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%231f3366'/%3E%3Cpath d='M10 7h8l5 5v13H10z' stroke='%23fff' stroke-width='2.4' fill='none' stroke-linejoin='round'/%3E%3Cpath d='M13.5 17h6M13.5 21h6' stroke='%23fff' stroke-width='2.4' stroke-linecap='round'/%3E%3C/svg%3E">
+<style>
+:root {
+  /* та же приглушённая тема, что у дашборда ML-проекта, /help и /support */
+  --page: #9aa3af;
+  --frame: #c2c8d0;
+  --frame-line: #848e9c;
+  --card: #dbdfe5;
+  --card-line: #a1aab6;
+  --field: #e9ecef;
+  --line: #b3bbc6;
+  --text: #161e2c;
+  --muted: #424c5e;
+  --navy: #1f3366;
+  --navy-soft: #c6d0e3;
+  --red: #9b1c12; --red-bg: #efcfca;
+  --green: #1d5b33; --green-bg: #cfe3d3;
+  --edit-bg: #f1dfa0;
+  --ui: "Segoe UI Variable Text", "Segoe UI", system-ui, sans-serif;
+  --head: "Segoe UI Variable Display", "Segoe UI", system-ui, sans-serif;
+  --num: Bahnschrift, "Segoe UI", sans-serif;
+  --mono: "Cascadia Mono", Consolas, monospace;
+}
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--page); color: var(--text); font: 18px/1.45 var(--ui); }
+button { font: inherit; color: inherit; cursor: pointer; }
+.wrap { max-width: 1680px; margin: 18px auto; padding: 0 20px; }
+.frame { background: var(--frame); border: 1px solid var(--frame-line); border-radius: 20px; padding: 18px 24px 24px;
+  box-shadow: 0 14px 40px rgba(16,24,40,.22); }
+
+/* Шапка */
+.top { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; }
+.brand { display: flex; align-items: center; gap: 12px; position: relative; flex-wrap: wrap; }
+.brand h1 { margin: 0; font: 600 28px var(--head); }
+.help { width: 28px; height: 28px; border-radius: 50%; border: 1.5px solid var(--muted); color: var(--muted);
+  display: grid; place-items: center; font: 600 15px var(--ui); position: relative; outline: none; }
+.help .tip { display: none; position: absolute; top: 38px; left: -12px; width: 540px; z-index: 30; padding: 14px 16px;
+  background: var(--field); border: 1px solid var(--card-line); border-radius: 12px; box-shadow: 0 12px 30px rgba(16,24,40,.25);
+  font: 400 16px/1.45 var(--ui); color: var(--text); }
+.help:hover .tip, .help:focus .tip { display: block; }
+.tip p { margin: 0 0 8px; } .tip p:last-child { margin: 0; }
+.spacer { flex: 1; }
+.nav { padding: 7px 14px; border-radius: 10px; border: 1px solid var(--navy); background: var(--field); color: var(--navy);
+  font-size: 16px; font-weight: 600; text-decoration: none; white-space: nowrap; }
+.nav:hover { background: var(--navy-soft); }
+.chip { display: inline-flex; align-items: center; gap: 8px; padding: 7px 14px; border-radius: 10px; border: 1px solid var(--card-line);
+  background: var(--card); font-size: 16px; max-width: 100%; }
+.chip span { min-width: 0; }
+.chip b { font-weight: 600; }
+.dot { width: 9px; height: 9px; border-radius: 50%; background: var(--muted); flex: none; }
+.dot.on { background: #2f7d4f; } .dot.off { background: var(--red); }
+
+/* Задача */
+.ask { display: flex; gap: 10px; margin-top: 16px; }
+.ask input { flex: 1; min-width: 0; font: 20px var(--ui); color: var(--text); background: var(--field); border: 1px solid var(--card-line);
+  border-radius: 12px; padding: 12px 16px; outline: none; }
+.ask input:focus { border-color: var(--navy); box-shadow: 0 0 0 2px var(--navy-soft); }
+.primary { border: 0; border-radius: 12px; padding: 0 26px; font-size: 19px; font-weight: 600; background: var(--navy); color: #fff; }
+.primary:hover { background: #172a55; }
+.primary.stop { background: var(--red); }
+.examples { display: flex; flex-wrap: wrap; gap: 8px; margin: 12px 0 16px; }
+.example { border: 1px solid var(--card-line); background: var(--card); border-radius: 999px; padding: 5px 13px; font-size: 15.5px; }
+.example:hover { border-color: var(--navy); }
+
+/* Карточки: ход работы слева во всю высоту, отчёт и изменения справа — всё видно без прокрутки страницы */
+.grid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.15fr); grid-template-rows: auto minmax(0, 1fr);
+  grid-template-areas: "work report" "work changes"; gap: 16px; height: calc(100vh - 262px); min-height: 560px; }
+.card { background: var(--card); border: 1px solid var(--card-line); border-radius: 14px; padding: 16px 20px 18px; min-width: 0;
+  min-height: 0; box-shadow: 0 1px 3px rgba(16,24,40,.1); position: relative; overflow: hidden; display: flex; flex-direction: column; }
+.card h2 { margin: 0 0 12px; font: 600 14px var(--ui); letter-spacing: .9px; text-transform: uppercase; color: var(--muted);
+  display: flex; flex-wrap: wrap; align-items: center; gap: 4px 10px; flex: none; }
+.card h2 .hint { margin-left: auto; font-size: 14px; font-weight: 400; letter-spacing: 0; text-transform: none; }
+.card .body { min-height: 0; overflow: auto; }
+.card.idle { border-style: dashed; box-shadow: none; }
+.card.idle .body { color: var(--muted); font-size: 16px; }
+.card.run::after { content: ""; position: absolute; left: 0; top: 0; height: 3px; width: 40%; background: var(--navy);
+  animation: run 1.1s ease-in-out infinite; }
+@keyframes run { from { left: -40%; } to { left: 100%; } }
+.card.fail { border-color: var(--red); }
+.error { color: var(--red); background: var(--red-bg); border-radius: 8px; padding: 8px 12px; font-size: 16px; }
+.work-card { grid-area: work; } .report-card { grid-area: report; } .changes-card { grid-area: changes; }
+.report-card .body { max-height: 34vh; }
+/* задача без правок — отчёт главный: забирает место у пустых изменений */
+.grid.readonly { grid-template-rows: minmax(0, 1fr) auto; }
+.grid.readonly .report-card .body { max-height: none; }
+
+/* ① Ход работы */
+.context { font-size: 16.5px; padding-bottom: 10px; border-bottom: 1px solid var(--line); }
+.context b { font-family: var(--num); color: var(--navy); }
+details { margin-top: 6px; }
+summary { cursor: pointer; color: var(--navy); font-weight: 600; font-size: 15.5px; }
+.calls { margin-top: 6px; display: grid; gap: 4px; }
+.call { margin: 0; border: 1px solid var(--line); border-radius: 8px; background: var(--field); padding: 5px 10px; font-size: 15.5px; }
+.call > summary { color: var(--text); font-weight: 400; display: flex; gap: 6px 10px; align-items: baseline; list-style: none; flex-wrap: wrap; }
+.call > summary::-webkit-details-marker { display: none; }
+.call code { font: 600 14.5px var(--mono); color: var(--navy); }
+.call .what { min-width: 0; overflow-wrap: anywhere; }
+.call .res { color: var(--muted); }
+.call .ms { margin-left: auto; color: var(--muted); font-family: var(--num); white-space: nowrap; }
+.bad { color: var(--red); }
+.kind { font-size: 13px; font-weight: 600; border-radius: 6px; padding: 0 7px; background: var(--navy-soft); color: var(--navy); white-space: nowrap; }
+.kind.edit { background: var(--edit-bg); color: #5c3a00; }
+.kind.git { background: var(--line); color: var(--text); }
+pre { margin: 6px 0 2px; padding: 8px 10px; background: var(--card); border-radius: 6px; font: 13.5px/1.4 var(--mono);
+  white-space: pre-wrap; word-break: break-word; max-height: 300px; overflow: auto; }
+.tools { margin: 6px 0 0; padding-left: 22px; font-size: 15px; }
+.tools code { font: 600 14px var(--mono); color: var(--navy); }
+
+.steps { display: grid; gap: 10px; margin-top: 10px; }
+.step { border-left: 4px solid var(--navy); padding: 2px 0 2px 12px; position: relative; }
+.step-head { display: flex; align-items: baseline; gap: 10px; font-size: 16px; color: var(--muted); margin-bottom: 4px; }
+.step-head .n { font: 600 18px var(--num); color: var(--navy); }
+.step.live { border-left-style: dashed; }
+.step.check { border-left-color: #d08a22; }
+.thought { font-size: 15.5px; color: var(--muted); font-style: italic; margin-bottom: 4px; white-space: pre-wrap; }
+.mini { margin: 4px 0 2px; font: 13.5px/1.45 var(--mono); border-radius: 6px; overflow: hidden; }
+.stats { display: flex; flex-wrap: wrap; gap: 6px 22px; margin-top: 12px; padding-top: 10px; border-top: 1px solid var(--line);
+  font-size: 15.5px; color: var(--muted); }
+.stats b { font: 600 18px var(--num); color: var(--text); }
+
+/* ② Отчёт */
+.report { font-size: 18px; line-height: 1.5; }
+.report p { margin: 0 0 8px; } .report ul, .report ol { margin: 0 0 8px; padding-left: 24px; }
+.report code { font: 15px var(--mono); background: var(--field); border-radius: 5px; padding: 1px 5px; overflow-wrap: anywhere; }
+.cursor { display: inline-block; width: 9px; height: 1.1em; background: var(--navy); vertical-align: text-bottom; animation: blink 1s steps(2) infinite; }
+@keyframes blink { to { opacity: 0; } }
+
+/* ③ Изменения */
+.actions { display: flex; gap: 8px; margin-left: auto; text-transform: none; letter-spacing: 0; }
+.actions[hidden] { display: none; }
+.actions .primary { padding: 7px 20px; font-size: 16px; border-radius: 10px; }
+.secondary { border: 1px solid var(--card-line); background: var(--field); border-radius: 10px; padding: 7px 16px; font-size: 16px; font-weight: 600; }
+.secondary:hover { border-color: var(--navy); }
+.file { border: 1px solid var(--line); border-radius: 10px; background: var(--field); margin-bottom: 10px; overflow: hidden; }
+.file:last-child { margin-bottom: 0; }
+.file-head { display: flex; align-items: baseline; gap: 10px; padding: 7px 12px; border-bottom: 1px solid var(--line); flex-wrap: wrap; }
+.file-head code { font: 600 15.5px var(--mono); color: var(--navy); overflow-wrap: anywhere; }
+.file-head .st { font-size: 14.5px; color: var(--muted); }
+.plus { font: 600 15px var(--num); color: var(--green); } .minus { font: 600 15px var(--num); color: var(--red); }
+.diff { font: 14px/1.5 var(--mono); }
+.hunk { padding: 2px 12px; background: var(--card); color: var(--muted); font: 13px var(--ui); }
+.ln { display: grid; grid-template-columns: 44px 18px minmax(0, 1fr); }
+.ln .no { text-align: right; padding-right: 8px; color: var(--muted); user-select: none; font-family: var(--num); font-size: 13px; padding-top: 1px; }
+.ln .sg { user-select: none; text-align: center; }
+.ln .tx { white-space: pre-wrap; overflow-wrap: anywhere; padding-right: 10px; }
+.ln.add { background: var(--green-bg); } .ln.add .sg { color: var(--green); font-weight: 700; }
+.ln.del { background: var(--red-bg); } .ln.del .sg { color: var(--red); font-weight: 700; }
+.ln.ctx .tx { color: var(--muted); }
+.banner { border-radius: 10px; padding: 10px 14px; margin-bottom: 10px; font-size: 16.5px; background: var(--green-bg); color: var(--green); }
+.banner.gray { background: var(--field); color: var(--muted); }
+.banner code { font: 600 14.5px var(--mono); }
+.toast { position: fixed; left: 50%; top: 16px; transform: translateX(-50%); z-index: 50; background: var(--red-bg); color: var(--red);
+  border: 1px solid var(--red); border-radius: 10px; padding: 10px 18px; font-size: 17px; display: none; max-width: 80vw; }
+.toast.show { display: block; }
+
+@media (max-width: 1100px) {
+  .wrap { margin: 8px auto; padding: 0 8px; }
+  .frame { padding: 12px 10px 16px; border-radius: 14px; }
+  .brand h1 { font-size: 23px; }
+  .spacer { display: none; }
+  .ask { flex-direction: column; }
+  .primary { padding: 12px; }
+  .grid { grid-template-columns: minmax(0, 1fr); grid-template-rows: none; grid-template-areas: "work" "report" "changes"; height: auto; min-height: 0; }
+  .card .body, .report-card .body { max-height: none; overflow: visible; }
+  .card h2 .hint { margin-left: 0; width: 100%; }
+  .actions { margin-left: 0; width: 100%; }
+  .help .tip { width: min(540px, 86vw); }
+}
+</style>
+</head>
+<body>
+<div class="wrap"><div class="frame">
+  <header class="top">
+    <div class="brand">
+      <svg width="36" height="36" viewBox="0 0 32 32" aria-hidden="true"><rect width="32" height="32" rx="7" fill="#1f3366"/><path d="M10 7h8l5 5v13H10z" stroke="#fff" stroke-width="2.4" fill="none" stroke-linejoin="round"/><path d="M13.5 17h6M13.5 21h6" stroke="#fff" stroke-width="2.4" stroke-linecap="round"/></svg>
+      <h1>Файлы проекта</h1>
+      <span class="help" tabindex="0">?<span class="tip">
+        <p><b>Задача</b> — словами, на уровне цели: что найти, обновить или создать. Какие файлы открыть, ассистент решает сам.</p>
+        <p><b>① Ход работы</b> — модель сама вызывает инструменты MCP: поиск, чтение и правка файлов (сервер files), изменения и история (сервер git). Каждый вызов раскрывается: аргументы, результат, время.</p>
+        <p><b>② Отчёт</b> — что ассистент нашёл и что изменил, со ссылками на файлы и строки.</p>
+        <p><b>③ Изменения</b> — черновик: diff каждого файла. «Применить» записывает правки в файлы проекта через MCP, «Отменить» выбрасывает их.</p>
+      </span></span>
+    </div>
+    <a class="nav" href="/">← Ассистент разработчика</a>
+    <span class="spacer"></span>
+    <span class="chip"><span class="dot" id="projectDot"></span><span>Проект: <b id="projectName">—</b> · ветка <b id="branchName">—</b></span></span>
+    <span class="chip"><span class="dot" id="ollamaDot"></span><span id="modelText">Ollama — проверяю…</span></span>
+  </header>
+
+  <form class="ask" id="form">
+    <input id="goal" autocomplete="off" spellcheck="false" placeholder="Что сделать с файлами проекта?" aria-label="Задача">
+    <button class="primary" id="runBtn">Выполнить</button>
+  </form>
+  <div class="examples" id="examples"></div>
+
+  <main class="grid" id="grid">
+    <section class="card work-card idle" id="workCard">
+      <h2>① Ход работы <span class="hint" id="workHint">MCP · files и git</span></h2>
+      <div class="body" id="workBody">Здесь появится каждый шаг: какой инструмент модель выбрала, с какими аргументами и что получила</div>
+    </section>
+    <section class="card report-card idle" id="reportCard">
+      <h2>② Отчёт <span class="hint" id="reportHint"></span></h2>
+      <div class="body" id="reportBody">Что ассистент нашёл и что изменил</div>
+    </section>
+    <section class="card changes-card idle" id="changesCard">
+      <h2>③ Изменения <span class="hint" id="changesHint">черновик</span>
+        <span class="actions" id="actions" hidden><button class="primary" id="applyBtn" type="button">Применить</button>
+          <button class="secondary" id="discardBtn" type="button">Отменить</button></span></h2>
+      <div class="body" id="changesBody">Правки появятся здесь. Ассистент пишет их в черновик MCP-сервера files, в файлы проекта — только по кнопке «Применить»</div>
+    </section>
+  </main>
+</div></div>
+<div class="toast" id="toast"></div>
+
+<script>
+const EXAMPLES = ["Найди все места, где используется пакетный прогноз", "Обнови документацию после изменений в коде",
+  "Составь CHANGELOG.md по истории git"];
+// вид инструмента: подпись и цвет плашки
+const KINDS = {list_files: ["файлы", ""], read_file: ["чтение", ""], search: ["поиск", ""], edit_file: ["правка", "edit"],
+  write_file: ["новый файл", "edit"], git_branch: ["git", "git"], git_status: ["git", "git"], git_diff: ["git", "git"], git_log: ["git", "git"]};
+
+const $ = id => document.getElementById(id);
+const esc = s => String(s).replace(/[&<>"]/g, c => ({"&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;"}[c]));
+const dec = (x, d = 1) => (+x).toFixed(d).replace(".", ",");
+const word = (n, one, few, many) => {
+  const m10 = n % 10, m100 = n % 100;
+  return m10 === 1 && m100 !== 11 ? one : m10 >= 2 && m10 <= 4 && (m100 < 12 || m100 > 14) ? few : many;
+};
+const plural = (n, one, few, many) => `${n} ${word(n, one, few, many)}`;
+let status = null, controller = null, live = "", timer = null, totals = null;
+
+function toast(text) {
+  const t = $("toast");
+  t.textContent = text;
+  t.classList.add("show");
+  clearTimeout(toast.timer);
+  toast.timer = setTimeout(() => t.classList.remove("show"), 6000);
+}
+
+function setCard(id, state, html) {
+  $(id + "Card").className = `card ${id}-card ${state}`;
+  if (html !== undefined) $(id + "Body").innerHTML = html;
+}
+
+// ---------- шапка ----------
+async function loadStatus() {
+  try {
+    status = await (await fetch("/api/status")).json();
+  } catch { toast("Сервер ассистента не отвечает"); return; }
+  $("projectName").textContent = status.project.name;
+  $("branchName").textContent = status.project.branch || "?";
+  $("projectDot").className = `dot ${status.project.branch ? "on" : "off"}`;
+  const o = status.ollama, ready = o.running && Object.values(o.models).every(Boolean);
+  $("ollamaDot").className = `dot ${ready ? "on" : "off"}`;
+  $("modelText").innerHTML = !o.running ? "Ollama не запущен — откройте его из меню «Пуск»"
+    : !ready ? `Нет модели: ${Object.entries(o.models).filter(([, ok]) => !ok).map(([m]) => esc(m)).join(", ")}`
+    : `<b>${esc(status.model)}</b> · Ollama ${esc(o.version)} · этот компьютер`;
+}
+
+// ---------- задача ----------
+$("examples").innerHTML = EXAMPLES.map(e => `<button class="example" type="button">${esc(e)}</button>`).join("");
+$("examples").addEventListener("click", e => {
+  const b = e.target.closest(".example");
+  if (!b || controller) return;
+  $("goal").value = b.textContent;
+  run();
+});
+$("form").addEventListener("submit", e => { e.preventDefault(); controller ? controller.abort() : run(); });
+
+async function run() {
+  const goal = $("goal").value.trim();
+  if (!goal) { toast("Напишите задачу: что найти, обновить или создать"); return; }
+  controller = new AbortController();
+  $("runBtn").textContent = "Остановить";
+  $("runBtn").classList.add("stop");
+  live = "";
+  totals = {started: performance.now(), model: 0, tokens: 0, calls: 0, ms: 0};
+  setCard("work", "run", '<div class="context">Код спрашивает у MCP ветку, изменения и список файлов…</div><div class="steps" id="steps"></div>');
+  setCard("report", "idle", "Отчёт появится, когда модель закончит работу");
+  setCard("changes", "idle", "Правки появятся здесь. Ассистент пишет их в черновик MCP-сервера files, в файлы проекта — только по кнопке «Применить»");
+  $("actions").hidden = true;
+  $("grid").classList.remove("readonly");
+  $("reportHint").textContent = $("changesHint").textContent = "";
+  tick();
+  try {
+    const res = await fetch("/api/files/run", {method: "POST", headers: {"Content-Type": "application/json"},
+      body: JSON.stringify({goal}), signal: controller.signal});
+    if (!res.ok) throw new Error((await res.json()).detail || `HTTP ${res.status}`);
+    const reader = res.body.getReader(), decoder = new TextDecoder();
+    let buffer = "";
+    for (;;) {
+      const {value, done} = await reader.read();
+      if (done) break;
+      buffer += decoder.decode(value, {stream: true});
+      let i;
+      while ((i = buffer.indexOf("\n")) >= 0) {
+        const line = buffer.slice(0, i).trim();
+        buffer = buffer.slice(i + 1);
+        if (line) handle(JSON.parse(line));
+      }
+    }
+  } catch (e) {
+    if (e.name === "AbortError") { $("workHint").textContent = "остановлено"; document.querySelector(".step.live")?.remove(); }
+    else toast(e.message);
+  }
+  controller = null;
+  clearInterval(timer);
+  $("runBtn").textContent = "Выполнить";
+  $("runBtn").classList.remove("stop");
+  document.querySelectorAll(".card.run").forEach(c => c.classList.remove("run"));
+}
+
+// время работы — в шапке хода работы, а у шага, который сейчас думает, — его секунды
+function tick() {
+  clearInterval(timer);
+  timer = setInterval(() => {
+    const t = (performance.now() - totals.started) / 1000;
+    $("workHint").textContent = `идёт ${Math.floor(t / 60)}:${String(Math.floor(t % 60)).padStart(2, "0")}`;
+    const s = document.querySelector(".step.live .timer");
+    if (s) s.textContent = dec((performance.now() - +s.dataset.from) / 1000);
+  }, 200);
+}
+
+function handle(ev) {
+  if (ev.type === "context") renderContext(ev);
+  else if (ev.type === "thinking") addThinking(ev.step);
+  else if (ev.type === "text") { live += ev.text; renderReport(true); }
+  else if (ev.type === "step") renderStep(ev);
+  else if (ev.type === "check") renderCheck(ev);
+  else if (ev.type === "report") { totals.model += ev.llm.seconds || 0; totals.tokens += ev.llm.tokens || 0;
+    document.querySelector(".step.live")?.remove(); live = ev.text; renderReport(false); }
+  else if (ev.type === "draft") renderDraft(ev);
+  else if (ev.type === "done") renderDone(ev);
+  else if (ev.type === "error") {
+    document.querySelector(".step.live")?.remove();
+    $("steps")?.insertAdjacentHTML("beforeend", `<div class="error">${esc(ev.message)}</div>`);
+    setCard("work", "fail");
+  }
+}
+
+// ---------- ① ход работы ----------
+function describe(c) {
+  const a = c.args || {}, r = c.result;
+  const what = {search: `«${a.query || ""}»${a.path ? " в " + a.path : ""}`, list_files: a.path || "весь проект",
+    read_file: c.ok ? `${r.path} · строки ${r.from}–${r.to}` : a.path, edit_file: a.path, write_file: a.path,
+    git_diff: a.path || "все изменения", git_log: a.oldest_first ? "старые сверху" : "новые сверху"}[c.tool] || "";
+  if (!c.ok) return [what, `<span class="bad">✗ ${esc(String(r).replace(/^Error executing tool \w+: /, ""))}</span>`];
+  const res = {
+    search: () => `${plural(r.count, "совпадение", "совпадения", "совпадений")} в ${plural(r.files, "файле", "файлах", "файлах")}`,
+    list_files: () => plural(r.count, "файл", "файла", "файлов"),
+    read_file: () => `из ${r.lines}`,
+    edit_file: () => `<span class="plus">+${r.added}</span> <span class="minus">−${r.removed}</span>`,
+    write_file: () => plural(r.lines, "строка", "строки", "строк"),
+    git_branch: () => esc(r.branch),
+    git_status: () => r.clean ? "изменений нет" : `изменено файлов: ${r.count}`,
+    git_diff: () => `${plural(r.lines, "строка", "строки", "строк")} diff`,
+    git_log: () => plural(r.count, "коммит", "коммита", "коммитов"),
+  }[c.tool];
+  return [what, res ? res() : ""];
+}
+
+function callHtml(c) {
+  const [label, cls] = KINDS[c.tool] || ["?", ""], [what, res] = describe(c);
+  const mini = c.ok && c.tool === "edit_file" ? `<div class="mini">${diffLines(c.result.diff)}</div>` : "";
+  return `<details class="call"><summary><span class="kind ${cls}">${label}</span><code>${esc(c.tool)}</code>
+    <span class="what">${esc(what)}</span><span class="res">${res}</span><span class="ms">${c.ms} мс</span></summary>
+    <pre>${esc(JSON.stringify({arguments: c.args, result: c.result}, null, 2))}</pre></details>${mini}`;
+}
+
+function renderContext(ev) {
+  const got = Object.fromEntries(ev.calls.filter(c => c.ok).map(c => [c.tool, c.result]));
+  const b = got.git_branch, s = got.git_status, f = got.list_files;
+  if (b) $("branchName").textContent = b.branch;
+  const changes = !s ? "" : s.clean ? " · изменений нет"
+    : ` · не закоммичено: ${s.changed.slice(0, 3).map(x => `<code>${esc(x.path)}</code>`).join(", ")}${s.count > 3 ? ` и ещё ${s.count - 3}` : ""}`;
+  const srv = Object.entries(ev.servers).map(([k, v]) => `${v.name} ${v.version}`).join(", ");
+  const tools = ev.tools.map(t => `<li><code>${esc(t.name)}</code> · ${esc(t.server)} — ${esc(t.description.split("\n")[0])}</li>`).join("");
+  const prompt = ev.prompt.map(m => `— ${m.role} —\n${m.content}`).join("\n\n");
+  $("workBody").innerHTML = `<div class="context">Контекст — код спросил MCP: ветка <b>${esc(b ? b.branch : "?")}</b>${changes}
+      · в проекте ${plural(f ? f.count : 0, "файл", "файла", "файлов")}
+      <details><summary>Вызовы MCP — ${ev.calls.length}</summary><div class="calls">${ev.calls.map(callHtml).join("")}</div></details>
+      <details><summary>Что получила модель — задача и ${plural(ev.tools.length, "инструмент", "инструмента", "инструментов")}</summary>
+        <ul class="tools">${tools}</ul><pre>${esc(prompt)}</pre></details></div>
+    <div class="steps" id="steps"></div>`;
+  $("workHint").title = `MCP · ${srv} · протокол ${Object.values(ev.servers)[0].protocol}`;
+}
+
+function addThinking(n) {
+  $("steps").insertAdjacentHTML("beforeend", `<div class="step live"><div class="step-head"><span class="n">${n}</span>
+    <span>модель выбирает шаг… <b class="timer" data-from="${performance.now()}">0,0</b> с</span></div></div>`);
+  scrollWork();
+}
+
+function renderStep(ev) {
+  totals.model += ev.llm.seconds || 0; totals.tokens += ev.llm.tokens || 0;
+  totals.calls += ev.calls.length; totals.ms += ev.calls.reduce((s, c) => s + c.ms, 0);
+  const step = document.querySelector(".step.live");
+  step.classList.remove("live");
+  step.innerHTML = `<div class="step-head"><span class="n">${ev.step}</span><span>модель решила за ${dec(ev.llm.seconds)} с</span></div>
+    ${ev.thought.trim() ? `<div class="thought">${esc(ev.thought.trim())}</div>` : ""}
+    <div class="calls">${ev.calls.map(callHtml).join("")}</div>`;
+  live = "";  // текст перед вызовами — мысль шага, а не отчёт
+  setCard("report", "idle", "Отчёт появится, когда модель закончит работу");
+  scrollWork();
+}
+
+// модель хотела закончить после правок — код один раз просит проверить их поиском; черновой отчёт не показываем
+function renderCheck(ev) {
+  totals.model += ev.llm.seconds || 0; totals.tokens += ev.llm.tokens || 0;
+  const step = document.querySelector(".step.live");
+  step.className = "step check";
+  step.innerHTML = `<div class="step-head"><span class="n">${ev.step}</span>
+    <span>модель хотела закончить за ${dec(ev.llm.seconds)} с — код попросил проверить правки поиском</span></div>`;
+  live = "";
+  setCard("report", "idle", "Отчёт появится, когда модель закончит работу");
+  scrollWork();
+}
+
+function scrollWork() { const b = $("workBody"); b.scrollTop = b.scrollHeight; }
+
+function renderDone(ev) {
+  $("workHint").textContent = `готово за ${dec(ev.seconds)} с`;
+  setCard("work", "");
+  $("workBody").insertAdjacentHTML("beforeend", `<div class="stats">
+    <span><b>${ev.steps}</b> ${word(ev.steps, "ход", "хода", "ходов")} модели · <b>${dec(totals.model)}</b> с</span>
+    <span>вызовов MCP <b>${totals.calls}</b> · <b>${totals.ms}</b> мс</span>
+    <span>модель написала <b>${totals.tokens}</b> ${word(totals.tokens, "токен", "токена", "токенов")}</span></div>`);
+  scrollWork();
+}
+
+// ---------- ② отчёт ----------
+const inline = s => esc(s).replace(/`([^`\n]+)`/g, "<code>$1</code>").replace(/\*\*([^*\n]+)\*\*/g, "<b>$1</b>");
+
+function markdown(text) {
+  const out = [];
+  let list = null;
+  for (const raw of text.split("\n")) {
+    const line = raw.trim(), item = line.match(/^(?:[-*•]|\d+[.)])\s+(.*)$/);
+    if (item) {
+      const tag = /^\d/.test(line) ? "ol" : "ul";
+      if (!list || list.tag !== tag) { if (list) out.push(`</${list.tag}>`); list = {tag}; out.push(`<${tag}>`); }
+      out.push(`<li>${inline(item[1])}</li>`);
+      continue;
+    }
+    if (list) { out.push(`</${list.tag}>`); list = null; }
+    if (line) out.push(`<p>${inline(line.replace(/^#+\s*/, ""))}</p>`);
+  }
+  if (list) out.push(`</${list.tag}>`);
+  return out.join("");
+}
+
+function renderReport(writing) {
+  setCard("report", writing ? "run" : "", `<div class="report">${markdown(live)}${writing ? '<span class="cursor"></span>' : ""}</div>`);
+  $("reportHint").textContent = `${status?.model || "модель"} · этот компьютер`;
+}
+
+// ---------- ③ изменения ----------
+function diffLines(diff) {
+  const out = [];
+  let a = 0, b = 0;
+  for (const line of diff.split("\n")) {
+    if (line.startsWith("---") || line.startsWith("+++")) continue;
+    const hunk = line.match(/^@@ -(\d+)(?:,\d+)? \+(\d+)(?:,(\d+))? @@/);
+    if (hunk) {
+      [a, b] = [+hunk[1], +hunk[2]];
+      out.push(`<div class="hunk">строки ${b}–${b + Math.max((+hunk[3] || 1) - 1, 0)}</div>`);
+      continue;
+    }
+    const sign = line[0], cls = sign === "+" ? "add" : sign === "-" ? "del" : "ctx";
+    const no = sign === "-" ? a++ : sign === "+" ? b++ : (a++, b++);
+    out.push(`<div class="ln ${cls}"><span class="no">${no}</span><span class="sg">${sign === " " ? "" : esc(sign)}</span><span class="tx">${esc(line.slice(1)) || " "}</span></div>`);
+  }
+  return `<div class="diff">${out.join("")}</div>`;
+}
+
+function renderDraft(ev) {
+  if (!ev.files.length) {
+    setCard("changes", "", '<div class="banner gray">Файлы не менялись — задача на поиск и анализ</div>');
+    $("grid").classList.add("readonly");
+    return;
+  }
+  $("changesHint").textContent = `черновик · ${plural(ev.files.length, "файл", "файла", "файлов")} · +${ev.added} −${ev.removed}`;
+  setCard("changes", "", ev.files.map(f => `<div class="file"><div class="file-head"><code>${esc(f.path)}</code>
+      <span class="st">${esc(f.status)}</span><span class="plus">+${f.added}</span><span class="minus">−${f.removed}</span></div>
+      ${diffLines(f.diff)}</div>`).join(""));
+  $("actions").hidden = false;
+}
+
+async function decide(url) {
+  $("actions").hidden = true;
+  try {
+    const r = await (await fetch(url, {method: "POST"})).json();
+    const body = $("changesBody");
+    if (r.written) {
+      const s = r.status, paths = (r.written.written || []).map(p => `<code>${esc(p)}</code>`).join(", ");
+      body.insertAdjacentHTML("afterbegin", `<div class="banner">Записано в ${esc(status?.project.name || "проект")} через MCP: ${paths}.
+        ${s ? `git status: не закоммичено ${plural(s.count, "файл", "файла", "файлов")}` : ""}</div>`);
+      $("changesHint").textContent = "записано в файлы проекта";
+    } else if (r.discarded !== undefined) {
+      setCard("changes", "", '<div class="banner gray">Черновик отменён — файлы проекта не менялись</div>');
+      $("changesHint").textContent = "";
+    } else throw new Error(r.detail || "Не получилось");
+  } catch (e) { toast(e.message); $("actions").hidden = false; }
+}
+$("applyBtn").addEventListener("click", () => decide("/api/files/apply"));
+$("discardBtn").addEventListener("click", () => decide("/api/files/discard"));
+
+loadStatus();
+$("goal").focus();
+</script>
+</body>
+</html>
