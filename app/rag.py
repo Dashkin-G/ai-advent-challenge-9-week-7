@@ -195,11 +195,12 @@ class Index:
                 "chunks": len(self.chunks), "model": config.EMBED_MODEL, "built": self.built}
 
     def nearest(self, vector, top, keep=lambda chunk: True):
-        """Ближайшие по косинусу фрагменты, которые проходят фильтр keep, — с близостью."""
+        """Ближайшие по косинусу фрагменты, которые проходят фильтр keep, — с близостью. Можно передать
+        несколько векторов запроса: у фрагмента берётся лучшая близость."""
         if self.matrix is None:
             return []
-        vector = np.array(vector, dtype=np.float32)
-        scores = self.matrix @ (vector / np.linalg.norm(vector))
+        queries = np.atleast_2d(np.array(vector, dtype=np.float32))
+        scores = (self.matrix @ (queries / np.linalg.norm(queries, axis=1, keepdims=True)).T).max(axis=1)
         found = []
         for i in np.argsort(-scores):
             if len(found) == top:

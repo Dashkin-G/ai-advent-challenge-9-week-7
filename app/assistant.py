@@ -27,20 +27,30 @@ def parse(text):
     return text[len("/help"):].strip() or OVERVIEW
 
 
+def server_info(client):
+    return {"name": client.server_info.name if client.server_info else "?",
+            "version": client.server_info.version if client.server_info else "",
+            "protocol": client.protocol_version}
+
+
+async def call(client, calls, name, args):
+    """Вызов инструмента MCP: запись с временем и результатом — в calls; вернёт результат или None при ошибке."""
+    started = time.perf_counter()
+    result = await client.call_tool(name, args)
+    text = "".join(getattr(part, "text", "") for part in result.content)
+    calls.append({"tool": name, "args": args, "ok": not result.is_error,
+                  "result": result.structured_content if result.structured_content is not None else text,
+                  "ms": round((time.perf_counter() - started) * 1000)})
+    return calls[-1]["result"] if calls[-1]["ok"] else None
+
+
 async def call_tools(plan):
     """Одна сессия MCP: вызовы инструментов по очереди с временем и результатом."""
     calls = []
     async with Client(config.MCP_URL, read_timeout_seconds=30) as client:
-        server = {"name": client.server_info.name if client.server_info else "?",
-                  "version": client.server_info.version if client.server_info else "",
-                  "protocol": client.protocol_version}
+        server = server_info(client)
         for name, args in plan:
-            started = time.perf_counter()
-            result = await client.call_tool(name, args)
-            text = "".join(getattr(part, "text", "") for part in result.content)
-            calls.append({"tool": name, "args": args, "ok": not result.is_error,
-                          "result": result.structured_content if result.structured_content is not None else text,
-                          "ms": round((time.perf_counter() - started) * 1000)})
+            await call(client, calls, name, args)
     return server, calls
 
 

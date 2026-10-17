@@ -9,6 +9,10 @@ PROJECT_DIR = Path(os.getenv("PROJECT_DIR", ROOT.parent / "ml-student-dropout"))
 DOCS = ["README.md", "docs/*.md"]
 CODE = ["*.py"]  # код проекта — в RAG ревью вместе с документацией
 
+# Поддержка: база знаний и CRM — JSON с клиентами и их обращениями
+FAQ = ROOT / "support" / "faq.md"
+CRM_FILE = Path(os.getenv("CRM_FILE", ROOT / "support" / "crm.json"))
+
 OLLAMA_URL = os.getenv("OLLAMA_URL", "http://127.0.0.1:11434")
 MODEL = os.getenv("MODEL", "qwen3.5:4b")
 EMBED_MODEL = os.getenv("EMBED_MODEL", "bge-m3")
@@ -17,6 +21,7 @@ TOP = int(os.getenv("TOP", "3"))  # фрагментов документаци�
 HOST = os.getenv("HOST", "127.0.0.1")
 PORT = int(os.getenv("PORT", "8001"))  # 8000 обычно занят самим ML-проектом
 MCP_URL = f"http://{HOST}:{PORT}/mcp/git/"
+CRM_MCP_URL = f"http://{HOST}:{PORT}/mcp/crm/"
 DATA_DIR = Path(os.getenv("DATA_DIR", ROOT / "data"))
 
 # Запросы к себе (MCP) и к Ollama — мимо системного прокси
